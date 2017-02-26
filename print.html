@@ -75,7 +75,7 @@
 <ul>
 <li><a href="pages/rand.html">rand</a> <a href="https://doc.rust-lang.org/rand/rand/index.html"><img src="https://img.shields.io/crates/v/rand.svg?label=rand" alt="rand-badge" /></a></li>
 <li><a href="pages/petgraph.html">petgraph</a> <a href="https://docs.rs/petgraph/0.4.3/petgraph/"><img src="https://img.shields.io/crates/v/petgraph.svg?label=petgraph" alt="petgraph-badge" /></a></li>
-<li><a href="pages.crossbeam.html">crossbeam</a> <a href="https://docs.rs/crossbeam"><img src="https://img.shields.io/crates/v/crossbeam.svg?label=crossbeam" alt="crossbeam-badge" /></a></li>
+<li><a href="pages/crossbeam.html">crossbeam</a> <a href="https://docs.rs/crossbeam"><img src="https://img.shields.io/crates/v/crossbeam.svg?label=crossbeam" alt="crossbeam-badge" /></a></li>
 </ul>
 </li>
 <li><a href="pages/algorithms.html">Algorithms</a></li>
@@ -693,6 +693,20 @@ TODO: Maybe provide a template?</p>
 
         <!-- Livereload script (if served using the cli tool) -->
         
+        <script type="text/javascript">
+            var socket = new WebSocket("ws://localhost:3001");
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload(true); // force reload from server (not from cache)
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+    
 
         <script src="highlight.js"></script>
         <script src="book.js"></script>
