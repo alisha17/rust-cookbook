@@ -47,7 +47,7 @@
         </script>
 
         <div id="sidebar" class="sidebar">
-            <ul class="chapter"><li class="affix"><a href="pages/table_of_contents.html">Table of Contents</a></li><li class="affix"><a href="pages/error_handling_note.html">A Note About Error Handling</a></li><li><a href="pages/math.html"><strong>1.</strong> Math</a></li><li><ul class="section"><li><a href="pages/rand.html"><strong>1.1.</strong> rand</a></li><li><a href="pages/petgraph.html"><strong>1.2.</strong> petgraph</a></li></ul></li><li><a href="pages/algorithms.html"><strong>2.</strong> Algorithms</a></li><li><a href="pages/IO.html"><strong>3.</strong> IO</a></li><li><ul class="section"><li><a href="pages/file_io.html"><strong>3.1.</strong> File IO</a></li><li><a href="pages/cli_parsing.html"><strong>3.2.</strong> Command Line Parsing</a></li></ul></li><li><a href="pages/serialization.html"><strong>4.</strong> Serialization</a></li><li><ul class="section"><li><a href="pages/byteorder.html"><strong>4.1.</strong> Byteorder</a></li><li><a href="pages/json.html"><strong>4.2.</strong> JSON</a></li><li><a href="pages/toml.html"><strong>4.3.</strong> TOML</a></li></ul></li><li><a href="pages/networking.html"><strong>5.</strong> Networking</a></li><li class="affix"><a href="pages/contributing.html">Contributing</a></li></ul>
+            <ul class="chapter"><li class="affix"><a href="pages/table_of_contents.html">Table of Contents</a></li><li class="affix"><a href="pages/error_handling_note.html">A Note About Error Handling</a></li><li><a href="pages/math.html"><strong>1.</strong> Math</a></li><li><ul class="section"><li><a href="pages/rand.html"><strong>1.1.</strong> rand</a></li><li><a href="pages/petgraph.html"><strong>1.2.</strong> petgraph</a></li><li><a href="pages/crossbeam.html"><strong>1.3.</strong> crossbeam</a></li></ul></li><li><a href="pages/algorithms.html"><strong>2.</strong> Algorithms</a></li><li><a href="pages/IO.html"><strong>3.</strong> IO</a></li><li><ul class="section"><li><a href="pages/file_io.html"><strong>3.1.</strong> File IO</a></li><li><a href="pages/cli_parsing.html"><strong>3.2.</strong> Command Line Parsing</a></li></ul></li><li><a href="pages/serialization.html"><strong>4.</strong> Serialization</a></li><li><ul class="section"><li><a href="pages/byteorder.html"><strong>4.1.</strong> Byteorder</a></li><li><a href="pages/json.html"><strong>4.2.</strong> JSON</a></li><li><a href="pages/toml.html"><strong>4.3.</strong> TOML</a></li></ul></li><li><a href="pages/networking.html"><strong>5.</strong> Networking</a></li><li class="affix"><a href="pages/contributing.html">Contributing</a></li></ul>
         </div>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -75,6 +75,7 @@
 <ul>
 <li><a href="pages/rand.html">rand</a> <a href="https://doc.rust-lang.org/rand/rand/index.html"><img src="https://img.shields.io/crates/v/rand.svg?label=rand" alt="rand-badge" /></a></li>
 <li><a href="pages/petgraph.html">petgraph</a> <a href="https://docs.rs/petgraph/0.4.3/petgraph/"><img src="https://img.shields.io/crates/v/petgraph.svg?label=petgraph" alt="petgraph-badge" /></a></li>
+<li><a href="pages.crossbeam.html">crossbeam</a> <a href="https://docs.rs/crossbeam"><img src="https://img.shields.io/crates/v/crossbeam.svg?label=crossbeam" alt="crossbeam-badge" /></a></li>
 </ul>
 </li>
 <li><a href="pages/algorithms.html">Algorithms</a></li>
@@ -289,7 +290,189 @@ fn main() {
 </code></pre>
 <p><img src="./graph.png" alt="Petersen Graph" /></p>
 <!-- Links -->
+<a class="header" href="#parallel-prime-calculations" name="parallel-prime-calculations"><h1>Parallel Prime Calculations</h1></a>
+<p><a href="https://docs.rs/crossbeam"><img src="https://img.shields.io/crates/v/crossbeam.svg?label=crossbeam" alt="crossbeam-badge" /></a></p>
+<a class="header" href="#calculate-primes-upto-a-number" name="calculate-primes-upto-a-number"><h2>Calculate primes upto a number</h2></a>
+<pre><code class="language-rust">
+/**
+ * Simple parallel programming example,
+ * calculating all primes less than n
+ * using sieve of erastonthes algorithm.
+ */
+
+extern crate crossbeam;
+
+// Basic implementation of Sieve of Erastonthes
+fn eratosthenes(mut primes: Vec&lt;bool&gt;, n: usize) {
+    let limit = (n as f64).sqrt() as usize;
+
+    for i in 2..limit {
+        if primes[i] == true {
+            let mut j = 2*i;
+            while j &lt; n {
+                primes[j] = false;
+                j += i;
+            }
+        }
+    }
+}
+
+// Parallel implementation of Sieve of Erastonthes
+fn parallel_eratosthenes(mut primes: Vec&lt;bool&gt;, n: usize) {
+    let limit = (n as f64).sqrt() as usize;
+
+    // For all numbers between i and sqrt(n),
+    // Look for all 'true' and report multiples
+    // as false.
+    for i in 2..limit {
+        if primes[i] == true {
+            let mut j = 2*i;
+
+            // Using crossbeam's scoped thread implementation
+            crossbeam::scope(|scope| {
+                scope.spawn(|| {
+                    while j &lt; n {
+                        primes[j] = false;
+                        j += i;
+                    }
+                });
+            });
+        }
+    }
+}
+
+fn main() {
+
+    // We shall calculate all primes up to 100
+    let num = 100;
+
+    // First, we create an array of size num,
+    // with all values except the first set to true
+    let mut primes = vec![true; num];
+    primes[0] = false;
+    primes[1] = false;
+
+    let par_primes = primes.clone();
+
+    eratosthenes(primes, num);
+
+    parallel_eratosthenes(par_primes, num);
+
+}
+</code></pre>
+<p>This code above uses the Sieve of Erastonthes algorithm to calculate all primes up to the value passed to it. This is done using two separate implementations of the same algorithm, one with a single-threaded function and another using the Scope struct from the crate crossbeam. The purpose of this is to show the strength of the Scope struct, as a way to allow for threads to spawn with data shared with their parents.</p>
+<!-- Links -->
 <a class="header" href="#algorithms" name="algorithms"><h1>Algorithms</h1></a>
+<a class="header" href="#file-io-example" name="file-io-example"><h1>File I/O Example</h1></a>
+<a class="header" href="#uses-rusts-fsfile-library-to-do-simple-file-reading-and-writing-operations" name="uses-rusts-fsfile-library-to-do-simple-file-reading-and-writing-operations"><h2>Uses Rust's fs::File library to do simple file reading and writing operations</h2></a>
+<pre><code class="language-rust">/**
+ * Simple file I/O and operations.
+ */
+
+// File operations
+use std::io;
+use std::io::prelude::*;
+use std::fs::File;
+
+fn operate_on_file(myfile: &amp;str, mystring: &amp;str, count: i32) -&gt; io::Result&lt;()&gt; {
+
+    // Try to open file
+    let mut f = try!(File::open(myfile));
+
+    // Write entire mystring buffer to file 'count' times
+    let mut c = 0;
+    while c &lt; count {
+        try!(f.write_all(mystring.as_bytes()));
+        c += 1;
+    }
+
+    // Read lines from file
+    for line in io::BufReader::new(&amp;f).lines() {
+        println!(&quot;{}&quot;, line.unwrap());
+    }
+    Ok(())
+}
+
+fn main() {
+
+    let myfile = &quot;input.txt&quot;;
+    let mystring = &quot;My favorite string! &lt;3&quot;;
+    let count = 10;
+
+    match operate_on_file(&amp;myfile, &amp;mystring, count) {
+        Ok(()) =&gt; { return; },
+        Err(_) =&gt; { println!(&quot;File operations failed!&quot;)},
+    };
+}
+</code></pre>
+<p>The above program is a simple example of how to write and read to a file.</p>
+<a class="header" href="#clap-example" name="clap-example"><h1>Clap Example</h1></a>
+<p><a href="https://docs.rs/clap"><img src="https://img.shields.io/crates/v/clap.svg?label=clap" alt="clap-badge" /></a></p>
+<a class="header" href="#parse-values-passed-to-the-program-through-command-line" name="parse-values-passed-to-the-program-through-command-line"><h2>Parse values passed to the program through command line</h2></a>
+<pre><code class="language-rust">
+/**
+ * An example of commandline argument parsing, with
+ * focus on using the clap library tools.
+ */
+
+// Argument parsing
+extern crate clap;
+use clap::{Arg, App};
+
+fn main() {
+
+    // Set command line arguments
+    let matches = App::new(&quot;My Test Program&quot;)
+                           .version(&quot;0.0.1&quot;)
+                           .author(&quot;Hackerman Jones &lt;hckrmnjones@hack.gov&gt;&quot;)
+                           .about(&quot;Teaches argument parsing&quot;)
+                           .arg(Arg::with_name(&quot;file&quot;)
+                                .short(&quot;f&quot;)
+                                .long(&quot;file&quot;)
+                                .value_name(&quot;FILE&quot;)
+                                .help(&quot;A cool file&quot;)
+                                .takes_value(true))
+                           .arg(Arg::with_name(&quot;input_string&quot;)
+                                .short(&quot;i&quot;)
+                                .help(&quot;Your favorite phrase&quot;)
+                                .multiple(true)
+                                .takes_value(true)
+                                .index(1))
+                           .arg(Arg::with_name(&quot;count&quot;)
+                                .short(&quot;c&quot;)
+                                .long(&quot;count&quot;)
+                                .takes_value(true)
+                                .help(&quot;5 less than your favorite number&quot;))
+                           .get_matches();
+
+    // Gets value for file, or defaults to 'input.txt'
+    let myfile = matches.value_of(&quot;file&quot;).unwrap_or(&quot;input.txt&quot;);
+    println!(&quot;The file passed is: {}&quot;, myfile);
+
+    // Gets value for input string, simple unwrap is safe,
+    // as this arg was required
+    let mystring = matches.value_of(&quot;input_string&quot;).unwrap_or(&quot;&quot;);
+    println!(&quot;The string passed is: {}&quot;, mystring);
+
+    // Gets value for count, default to 0, then convert to int
+    let count_string = matches.value_of(&quot;count&quot;).unwrap_or(&quot;0&quot;);
+    let mut count = count_string.parse::&lt;i32&gt;().unwrap_or(0);
+
+    count += 5;
+
+    println!(&quot;The value of the number passed plus 5 is: {}&quot;, count);
+}
+</code></pre>
+<p>The purpose of this is to display the raw power of the clap library, an extensive command line argument parser for Rust. First, the user writes a description for their App, given a version, author, and about string.</p>
+<p>The next step involves describing the args that clap can expect. 'with_name' is the option or argument descriptor that 'value_of' uses to get the value passed. 'short' and 'long' sets the version to be passed with characters '-' and '--', respectively, through the command line. 'value_name' is simply cosmetic, and is NOT used in getting any actual values. 'help' allows the user to describe what the argument is used for or what the argument expects. If 'takes_value' is set to true, it will expect the argument to take a value, such as a string, filename, or number, as in the example above. For more examples of usage and a description of what clap is capable of, please visit their <a href="https://kbknapp.github.io/clap-rs/clap/struct.App.html">wiki</a>.</p>
+<p>We can test this program by running command similar to the following:</p>
+<pre><code>cargo run -- -f myfile.txt -i &quot;I &lt;3 Rust!!!&quot; --count 6
+</code></pre>
+<pre><code>&gt; The file passed is: myfile.txt
+&gt; The string passed is: I &lt;3 Rust!!!
+&gt; The value of the number passed plus 5 is: 11
+</code></pre>
+<!-- Links -->
 <a class="header" href="#byteorder" name="byteorder"><h1>Byteorder</h1></a>
 <p><a href="https://docs.rs/byteorder"><img src="https://img.shields.io/crates/v/rustc-serialize.svg?label=byteorder" alt="byteorder-badge" /></a></p>
 <a class="header" href="#read-and-write-integers-in-little-endian-byte-order" name="read-and-write-integers-in-little-endian-byte-order"><h2>Read and write integers in little-endian byte order</h2></a>

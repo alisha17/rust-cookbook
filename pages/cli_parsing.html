@@ -47,7 +47,7 @@
         </script>
 
         <div id="sidebar" class="sidebar">
-            <ul class="chapter"><li class="affix"><a href="pages/table_of_contents.html">Table of Contents</a></li><li class="affix"><a href="pages/error_handling_note.html">A Note About Error Handling</a></li><li><a href="pages/math.html"><strong>1.</strong> Math</a></li><li><ul class="section"><li><a href="pages/rand.html"><strong>1.1.</strong> rand</a></li><li><a href="pages/petgraph.html"><strong>1.2.</strong> petgraph</a></li></ul></li><li><a href="pages/algorithms.html"><strong>2.</strong> Algorithms</a></li><li><a href="pages/IO.html"><strong>3.</strong> IO</a></li><li><ul class="section"><li><a href="pages/file_io.html"><strong>3.1.</strong> File IO</a></li><li><a href="pages/cli_parsing.html" class="active"><strong>3.2.</strong> Command Line Parsing</a></li></ul></li><li><a href="pages/serialization.html"><strong>4.</strong> Serialization</a></li><li><ul class="section"><li><a href="pages/byteorder.html"><strong>4.1.</strong> Byteorder</a></li><li><a href="pages/json.html"><strong>4.2.</strong> JSON</a></li><li><a href="pages/toml.html"><strong>4.3.</strong> TOML</a></li></ul></li><li><a href="pages/networking.html"><strong>5.</strong> Networking</a></li><li class="affix"><a href="pages/contributing.html">Contributing</a></li></ul>
+            <ul class="chapter"><li class="affix"><a href="pages/table_of_contents.html">Table of Contents</a></li><li class="affix"><a href="pages/error_handling_note.html">A Note About Error Handling</a></li><li><a href="pages/math.html"><strong>1.</strong> Math</a></li><li><ul class="section"><li><a href="pages/rand.html"><strong>1.1.</strong> rand</a></li><li><a href="pages/petgraph.html"><strong>1.2.</strong> petgraph</a></li><li><a href="pages/crossbeam.html"><strong>1.3.</strong> crossbeam</a></li></ul></li><li><a href="pages/algorithms.html"><strong>2.</strong> Algorithms</a></li><li><a href="pages/IO.html"><strong>3.</strong> IO</a></li><li><ul class="section"><li><a href="pages/file_io.html"><strong>3.1.</strong> File IO</a></li><li><a href="pages/cli_parsing.html" class="active"><strong>3.2.</strong> Command Line Parsing</a></li></ul></li><li><a href="pages/serialization.html"><strong>4.</strong> Serialization</a></li><li><ul class="section"><li><a href="pages/byteorder.html"><strong>4.1.</strong> Byteorder</a></li><li><a href="pages/json.html"><strong>4.2.</strong> JSON</a></li><li><a href="pages/toml.html"><strong>4.3.</strong> TOML</a></li></ul></li><li><a href="pages/networking.html"><strong>5.</strong> Networking</a></li><li class="affix"><a href="pages/contributing.html">Contributing</a></li></ul>
         </div>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -67,7 +67,74 @@
                 </div>
 
                 <div id="content" class="content">
-                    
+                    <a class="header" href="#clap-example" name="clap-example"><h1>Clap Example</h1></a>
+<p><a href="https://docs.rs/clap"><img src="https://img.shields.io/crates/v/clap.svg?label=clap" alt="clap-badge" /></a></p>
+<a class="header" href="#parse-values-passed-to-the-program-through-command-line" name="parse-values-passed-to-the-program-through-command-line"><h2>Parse values passed to the program through command line</h2></a>
+<pre><code class="language-rust">
+/**
+ * An example of commandline argument parsing, with
+ * focus on using the clap library tools.
+ */
+
+// Argument parsing
+extern crate clap;
+use clap::{Arg, App};
+
+fn main() {
+
+    // Set command line arguments
+    let matches = App::new(&quot;My Test Program&quot;)
+                           .version(&quot;0.0.1&quot;)
+                           .author(&quot;Hackerman Jones &lt;hckrmnjones@hack.gov&gt;&quot;)
+                           .about(&quot;Teaches argument parsing&quot;)
+                           .arg(Arg::with_name(&quot;file&quot;)
+                                .short(&quot;f&quot;)
+                                .long(&quot;file&quot;)
+                                .value_name(&quot;FILE&quot;)
+                                .help(&quot;A cool file&quot;)
+                                .takes_value(true))
+                           .arg(Arg::with_name(&quot;input_string&quot;)
+                                .short(&quot;i&quot;)
+                                .help(&quot;Your favorite phrase&quot;)
+                                .multiple(true)
+                                .takes_value(true)
+                                .index(1))
+                           .arg(Arg::with_name(&quot;count&quot;)
+                                .short(&quot;c&quot;)
+                                .long(&quot;count&quot;)
+                                .takes_value(true)
+                                .help(&quot;5 less than your favorite number&quot;))
+                           .get_matches();
+
+    // Gets value for file, or defaults to 'input.txt'
+    let myfile = matches.value_of(&quot;file&quot;).unwrap_or(&quot;input.txt&quot;);
+    println!(&quot;The file passed is: {}&quot;, myfile);
+
+    // Gets value for input string, simple unwrap is safe,
+    // as this arg was required
+    let mystring = matches.value_of(&quot;input_string&quot;).unwrap_or(&quot;&quot;);
+    println!(&quot;The string passed is: {}&quot;, mystring);
+
+    // Gets value for count, default to 0, then convert to int
+    let count_string = matches.value_of(&quot;count&quot;).unwrap_or(&quot;0&quot;);
+    let mut count = count_string.parse::&lt;i32&gt;().unwrap_or(0);
+
+    count += 5;
+
+    println!(&quot;The value of the number passed plus 5 is: {}&quot;, count);
+}
+</code></pre>
+<p>The purpose of this is to display the raw power of the clap library, an extensive command line argument parser for Rust. First, the user writes a description for their App, given a version, author, and about string.</p>
+<p>The next step involves describing the args that clap can expect. 'with_name' is the option or argument descriptor that 'value_of' uses to get the value passed. 'short' and 'long' sets the version to be passed with characters '-' and '--', respectively, through the command line. 'value_name' is simply cosmetic, and is NOT used in getting any actual values. 'help' allows the user to describe what the argument is used for or what the argument expects. If 'takes_value' is set to true, it will expect the argument to take a value, such as a string, filename, or number, as in the example above. For more examples of usage and a description of what clap is capable of, please visit their <a href="https://kbknapp.github.io/clap-rs/clap/struct.App.html">wiki</a>.</p>
+<p>We can test this program by running command similar to the following:</p>
+<pre><code>cargo run -- -f myfile.txt -i &quot;I &lt;3 Rust!!!&quot; --count 6
+</code></pre>
+<pre><code>&gt; The file passed is: myfile.txt
+&gt; The string passed is: I &lt;3 Rust!!!
+&gt; The value of the number passed plus 5 is: 11
+</code></pre>
+<!-- Links -->
+
                 </div>
 
                 <!-- Mobile navigation buttons -->

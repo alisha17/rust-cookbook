@@ -1,0 +1,188 @@
+<!DOCTYPE HTML>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>crossbeam - </title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <base href="../">
+
+        <link rel="stylesheet" href="book.css">
+        <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+        <link rel="shortcut icon" href="favicon.png">
+
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+
+        <!-- MathJax -->
+        <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Fetch JQuery from CDN but have a local fallback -->
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+        <script>
+            if (typeof jQuery == 'undefined') {
+                document.write(unescape("%3Cscript src='jquery.js'%3E%3C/script%3E"));
+            }
+        </script>
+    </head>
+    <body class="light">
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme = localStorage.getItem('theme');
+            if (theme == null) { theme = 'light'; }
+            $('body').removeClass().addClass(theme);
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var sidebar = localStorage.getItem('sidebar');
+            if (sidebar === "hidden") { $("html").addClass("sidebar-hidden") }
+            else if (sidebar === "visible") { $("html").addClass("sidebar-visible") }
+        </script>
+
+        <div id="sidebar" class="sidebar">
+            <ul class="chapter"><li class="affix"><a href="pages/table_of_contents.html">Table of Contents</a></li><li class="affix"><a href="pages/error_handling_note.html">A Note About Error Handling</a></li><li><a href="pages/math.html"><strong>1.</strong> Math</a></li><li><ul class="section"><li><a href="pages/rand.html"><strong>1.1.</strong> rand</a></li><li><a href="pages/petgraph.html"><strong>1.2.</strong> petgraph</a></li><li><a href="pages/crossbeam.html" class="active"><strong>1.3.</strong> crossbeam</a></li></ul></li><li><a href="pages/algorithms.html"><strong>2.</strong> Algorithms</a></li><li><a href="pages/IO.html"><strong>3.</strong> IO</a></li><li><ul class="section"><li><a href="pages/file_io.html"><strong>3.1.</strong> File IO</a></li><li><a href="pages/cli_parsing.html"><strong>3.2.</strong> Command Line Parsing</a></li></ul></li><li><a href="pages/serialization.html"><strong>4.</strong> Serialization</a></li><li><ul class="section"><li><a href="pages/byteorder.html"><strong>4.1.</strong> Byteorder</a></li><li><a href="pages/json.html"><strong>4.2.</strong> JSON</a></li><li><a href="pages/toml.html"><strong>4.3.</strong> TOML</a></li></ul></li><li><a href="pages/networking.html"><strong>5.</strong> Networking</a></li><li class="affix"><a href="pages/contributing.html">Contributing</a></li></ul>
+        </div>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar" class="menu-bar">
+                    <div class="left-buttons">
+                        <i id="sidebar-toggle" class="fa fa-bars"></i>
+                        <i id="theme-toggle" class="fa fa-paint-brush"></i>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <i id="print-button" class="fa fa-print" title="Print this book"></i>
+                    </div>
+                </div>
+
+                <div id="content" class="content">
+                    <a class="header" href="#parallel-prime-calculations" name="parallel-prime-calculations"><h1>Parallel Prime Calculations</h1></a>
+<p><a href="https://docs.rs/crossbeam"><img src="https://img.shields.io/crates/v/crossbeam.svg?label=crossbeam" alt="crossbeam-badge" /></a></p>
+<a class="header" href="#calculate-primes-upto-a-number" name="calculate-primes-upto-a-number"><h2>Calculate primes upto a number</h2></a>
+<pre><code class="language-rust">
+/**
+ * Simple parallel programming example,
+ * calculating all primes less than n
+ * using sieve of erastonthes algorithm.
+ */
+
+extern crate crossbeam;
+
+// Basic implementation of Sieve of Erastonthes
+fn eratosthenes(mut primes: Vec&lt;bool&gt;, n: usize) {
+    let limit = (n as f64).sqrt() as usize;
+
+    for i in 2..limit {
+        if primes[i] == true {
+            let mut j = 2*i;
+            while j &lt; n {
+                primes[j] = false;
+                j += i;
+            }
+        }
+    }
+}
+
+// Parallel implementation of Sieve of Erastonthes
+fn parallel_eratosthenes(mut primes: Vec&lt;bool&gt;, n: usize) {
+    let limit = (n as f64).sqrt() as usize;
+
+    // For all numbers between i and sqrt(n),
+    // Look for all 'true' and report multiples
+    // as false.
+    for i in 2..limit {
+        if primes[i] == true {
+            let mut j = 2*i;
+
+            // Using crossbeam's scoped thread implementation
+            crossbeam::scope(|scope| {
+                scope.spawn(|| {
+                    while j &lt; n {
+                        primes[j] = false;
+                        j += i;
+                    }
+                });
+            });
+        }
+    }
+}
+
+fn main() {
+
+    // We shall calculate all primes up to 100
+    let num = 100;
+
+    // First, we create an array of size num,
+    // with all values except the first set to true
+    let mut primes = vec![true; num];
+    primes[0] = false;
+    primes[1] = false;
+
+    let par_primes = primes.clone();
+
+    eratosthenes(primes, num);
+
+    parallel_eratosthenes(par_primes, num);
+
+}
+</code></pre>
+<p>This code above uses the Sieve of Erastonthes algorithm to calculate all primes up to the value passed to it. This is done using two separate implementations of the same algorithm, one with a single-threaded function and another using the Scope struct from the crate crossbeam. The purpose of this is to show the strength of the Scope struct, as a way to allow for threads to spawn with data shared with their parents.</p>
+<!-- Links -->
+
+                </div>
+
+                <!-- Mobile navigation buttons -->
+                
+                    <a href="pages/petgraph.html" class="mobile-nav-chapters previous">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a href="pages/algorithms.html" class="mobile-nav-chapters next">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+
+            </div>
+
+            
+                <a href="pages/petgraph.html" class="nav-chapters previous" title="You can navigate through the chapters using the arrow keys">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+            
+
+            
+                <a href="pages/algorithms.html" class="nav-chapters next" title="You can navigate through the chapters using the arrow keys">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+            
+
+        </div>
+
+
+        <!-- Local fallback for Font Awesome -->
+        <script>
+            if ($(".fa").css("font-family") !== "FontAwesome") {
+                $('<link rel="stylesheet" type="text/css" href="_FontAwesome/css/font-awesome.css">').prependTo('head');
+            }
+        </script>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        
+
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+    </body>
+</html>
