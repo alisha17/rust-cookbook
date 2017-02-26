@@ -71,12 +71,26 @@
 <p>A practical guide to the Rust crate ecosystem.</p>
 <a class="header" href="#recipes" name="recipes"><h2>Recipes</h2></a>
 <ul>
+<li><a href="pages/math.html">Math</a>
+<ul>
+<li><a href="pages/rand.html">rand</a> <a href="https://doc.rust-lang.org/rand/rand/index.html"><img src="https://img.shields.io/crates/v/rand.svg?label=rand" alt="rand-badge" /></a></li>
+</ul>
+</li>
+<li><a href="pages/algorithms.html">Algorithms</a></li>
+<li><a href="pages/IO.html">IO</a>
+<ul>
+<li><a href="pages/file_io.html">File IO</a> <a href="https://doc.rust-lang.org/std/fs/struct.File.html"><img src="https://img.shields.io/crates/v/file.svg?label=file" alt="file-badge" /></a></li>
+<li><a href="pages/cli_parsing.html">Command Line Parsing</a> <a href="https://kbknapp.github.io/clap-rs/clap/struct.Arg.html"><img src="https://img.shields.io/crates/v/clap.svg?label=clap" alt="clap-badge" /></a></li>
+</ul>
+</li>
+<li><a href="pages/serialization.html">Serialization</a>
+<ul>
 <li><a href="pages/byteorder.html">Byteorder</a> <a href="https://docs.rs/byteorder"><img src="https://img.shields.io/crates/v/byteorder.svg?label=byteorder" alt="byteorder-badge" /></a></li>
-<li><a href="pages/fileio.html">File IO</a> <a href="https://doc.rust-lang.org/std/fs/struct.File.html"><img src="https://img.shields.io/crates/v/file.svg?label=file" alt="file-badge" /></a></li>
-<li><a href="pages/cliparsing.html">Command Line Parsing</a> <a href="https://kbknapp.github.io/clap-rs/clap/struct.Arg.html"><img src="https://img.shields.io/crates/v/clap.svg?label=clap" alt="clap-badge" /></a></li>
 <li><a href="pages/json.html">JSON</a> <a href="http://json.rs/doc/json"><img src="https://img.shields.io/crates/v/json.svg?label=json" alt="json-badge" /></a></li>
 <li><a href="pages/toml.html">TOML</a> <a href="http://alexcrichton.com/toml-rs/toml/"><img src="https://img.shields.io/crates/v/toml.svg?label=toml" alt="toml-badge" /></a></li>
-<li><a href="pages/rand.html">rand</a> <a href="https://doc.rust-lang.org/rand/rand/index.html"><img src="https://img.shields.io/crates/v/rand.svg?label=rand" alt="rand-badge" /></a></li>
+</ul>
+</li>
+<li><a href="pages/networking.html">Networking</a></li>
 </ul>
 <a class="header" href="#contributing" name="contributing"><h2>Contributing</h2></a>
 <p>If you'd like to make changes to the project, please see <a href="pages/contributing.html">this guide</a>.</p>
@@ -150,7 +164,7 @@ $\int_{0}^{\pi} sin(x) dx$ using monte carlo.</p>
 <li>Creating thread-specific RNG</li>
 <li>Generating real numbers over an interval</li>
 </ul>
-<pre><code class="language-rust,ignore">extern crate rand;
+<pre><code class="language-rust">extern crate rand;
 
 use rand::Rng;
 use std::f32;
@@ -183,7 +197,11 @@ fn monte_carlo(a: f32, b: f32, n: u32) -&gt; f32 {
 }
 
 fn main() {
-    println!(&quot;{}&quot;, monte_carlo(0., f32::consts::PI, 200_000));
+    let actual = 2.0;
+    let estimate = monte_carlo(0., f32::consts::PI, 200_000);
+    let rel_err = (estimate - actual).abs() / actual;
+    assert!(rel_err &lt; 10e-3);
+    println!(&quot;estimate: {} rel_err: {}&quot;, estimate, rel_err);
 }
 </code></pre>
 <a class="header" href="#example-generating-random-rgb-colors" name="example-generating-random-rgb-colors"><h3>Example: Generating random RGB colors</h3></a>
@@ -195,7 +213,7 @@ polymorphic function <code>Rng::gen()</code> to generate random types.</p>
 <ul>
 <li>Generating a random structure</li>
 </ul>
-<pre><code class="language-rust,ignore">extern crate rand;
+<pre><code class="language-rust">extern crate rand;
 
 use rand::Rng;
 use rand::Rand;

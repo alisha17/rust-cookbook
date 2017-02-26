@@ -96,7 +96,7 @@ $\int_{0}^{\pi} sin(x) dx$ using monte carlo.</p>
 <li>Creating thread-specific RNG</li>
 <li>Generating real numbers over an interval</li>
 </ul>
-<pre><code class="language-rust,ignore">extern crate rand;
+<pre><code class="language-rust">extern crate rand;
 
 use rand::Rng;
 use std::f32;
@@ -129,7 +129,11 @@ fn monte_carlo(a: f32, b: f32, n: u32) -&gt; f32 {
 }
 
 fn main() {
-    println!(&quot;{}&quot;, monte_carlo(0., f32::consts::PI, 200_000));
+    let actual = 2.0;
+    let estimate = monte_carlo(0., f32::consts::PI, 200_000);
+    let rel_err = (estimate - actual).abs() / actual;
+    assert!(rel_err &lt; 10e-3);
+    println!(&quot;estimate: {} rel_err: {}&quot;, estimate, rel_err);
 }
 </code></pre>
 <a class="header" href="#example-generating-random-rgb-colors" name="example-generating-random-rgb-colors"><h3>Example: Generating random RGB colors</h3></a>
@@ -141,7 +145,7 @@ polymorphic function <code>Rng::gen()</code> to generate random types.</p>
 <ul>
 <li>Generating a random structure</li>
 </ul>
-<pre><code class="language-rust,ignore">extern crate rand;
+<pre><code class="language-rust">extern crate rand;
 
 use rand::Rng;
 use rand::Rand;
