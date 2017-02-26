@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>A Note About Error Handling - </title>
+        <title>petgraph - </title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,7 +47,7 @@
         </script>
 
         <div id="sidebar" class="sidebar">
-            <ul class="chapter"><li class="affix"><a href="pages/table_of_contents.html">Table of Contents</a></li><li class="affix"><a href="pages/error_handling_note.html" class="active">A Note About Error Handling</a></li><li><a href="pages/math.html"><strong>1.</strong> Math</a></li><li><ul class="section"><li><a href="pages/rand.html"><strong>1.1.</strong> rand</a></li><li><a href="pages/petgraph.html"><strong>1.2.</strong> petgraph</a></li></ul></li><li><a href="pages/algorithms.html"><strong>2.</strong> Algorithms</a></li><li><a href="pages/IO.html"><strong>3.</strong> IO</a></li><li><ul class="section"><li><a href="pages/file_io.html"><strong>3.1.</strong> File IO</a></li><li><a href="pages/cli_parsing.html"><strong>3.2.</strong> Command Line Parsing</a></li></ul></li><li><a href="pages/serialization.html"><strong>4.</strong> Serialization</a></li><li><ul class="section"><li><a href="pages/byteorder.html"><strong>4.1.</strong> Byteorder</a></li><li><a href="pages/json.html"><strong>4.2.</strong> JSON</a></li><li><a href="pages/toml.html"><strong>4.3.</strong> TOML</a></li></ul></li><li><a href="pages/networking.html"><strong>5.</strong> Networking</a></li><li class="affix"><a href="pages/contributing.html">Contributing</a></li></ul>
+            <ul class="chapter"><li class="affix"><a href="pages/table_of_contents.html">Table of Contents</a></li><li class="affix"><a href="pages/error_handling_note.html">A Note About Error Handling</a></li><li><a href="pages/math.html"><strong>1.</strong> Math</a></li><li><ul class="section"><li><a href="pages/rand.html"><strong>1.1.</strong> rand</a></li><li><a href="pages/petgraph.html" class="active"><strong>1.2.</strong> petgraph</a></li></ul></li><li><a href="pages/algorithms.html"><strong>2.</strong> Algorithms</a></li><li><a href="pages/IO.html"><strong>3.</strong> IO</a></li><li><ul class="section"><li><a href="pages/file_io.html"><strong>3.1.</strong> File IO</a></li><li><a href="pages/cli_parsing.html"><strong>3.2.</strong> Command Line Parsing</a></li></ul></li><li><a href="pages/serialization.html"><strong>4.</strong> Serialization</a></li><li><ul class="section"><li><a href="pages/byteorder.html"><strong>4.1.</strong> Byteorder</a></li><li><a href="pages/json.html"><strong>4.2.</strong> JSON</a></li><li><a href="pages/toml.html"><strong>4.3.</strong> TOML</a></li></ul></li><li><a href="pages/networking.html"><strong>5.</strong> Networking</a></li><li class="affix"><a href="pages/contributing.html">Contributing</a></li></ul>
         </div>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -67,55 +67,65 @@
                 </div>
 
                 <div id="content" class="content">
-                    <a class="header" href="#a-note-about-error-handling" name="a-note-about-error-handling"><h1>A note about error handling</h1></a>
-<p>Error handling in Rust is robust when done correctly, but in today's
-Rust it requires a fair bit of boilerplate. Because of this one often
-sees Rust examples filled with <code>unwrap</code> calls instead of proper error
-handling.</p>
-<p>Since these recipes are intended to be reused as-is and encourage best
-practices, they set up error handling correctly, and when necessary to
-reduce boilerplate, they use the [error-chain] crate.</p>
-<p>The code for this setup generally looks like:</p>
-<pre><code class="language-rust">#[macro_use]
-extern crate error_chain;
+                    <a class="header" href="#petgraph" name="petgraph"><h1>petgraph</h1></a>
+<a class="header" href="#graph-data-structure-library" name="graph-data-structure-library"><h2>graph data structure library</h2></a>
+<p><a href="https://docs.rs/petgraph/0.4.3/petgraph/"><img src="https://img.shields.io/crates/v/petgraph.svg?label=petgraph" alt="petgraph-badge" /></a></p>
+<a class="header" href="#example-drawing-the-petersen-graph" name="example-drawing-the-petersen-graph"><h3>Example: Drawing the Petersen Graph</h3></a>
+<p><code>petgraph</code> has powerful features for graph representation and algorithms.
+In the example below, we create and draw a graph in dot format.</p>
+<p><em>Key concepts:</em></p>
+<ul>
+<li>Creating graphs from vertices and edges</li>
+<li>Printing in human readable form</li>
+</ul>
+<pre><code class="language-rust">extern crate petgraph;
 
-mod errors {
-    error_chain! {
-        foreign_links {
-            Io(::std::io::Error);
-        }
+use petgraph::Graph;
+use petgraph::dot::{Dot, Config};
+
+fn main() {
+    // Create a new undirected graph, g
+    let mut g = Graph::&lt;u32, u32, petgraph::Undirected&gt;::new_undirected();
+    let w = 0;
+    let mut v = Vec::new();
+
+    // Add 10 vertices to G
+    for i in 1..11 {
+        v.push(g.add_node(i));
     }
-}
+    
+    // Connect with 15 edges
+    for i in 0..4 {
+        g.add_edge(v[i], v[i + 1], w);
+        g.add_edge(v[i], v[i + 5], w);
+    }
+    g.add_edge(v[0], v[4], w);
+    g.add_edge(v[4], v[9], w);
 
-use errors::*;
-
-fn main() { run().unwrap() }
-
-fn run() -&gt; Result&lt;()&gt; {
-    use std::io::Write;
-    let ref mut stdout = ::std::io::stdout();
-    writeln!(stdout, &quot;hello, world&quot;)?;
-
-    Ok(())
+    g.add_edge(v[5], v[7], w);
+    g.add_edge(v[5], v[8], w);
+    g.add_edge(v[6], v[8], w);
+    g.add_edge(v[6], v[9], w);
+    g.add_edge(v[7], v[9], w);
+    
+    // Print in graphviz dot format
+    println!(&quot;{:?}&quot;, Dot::with_config(&amp;g, &amp;[Config::EdgeNoLabel]));
 }
 </code></pre>
-<p>This is using the <code>error_chain!</code> macro to define a custom <code>Error</code>
-and <code>Result</code> type, along with an automatic conversion from
-the common <code>::std::io::Error</code> type. The automatic conversion
-makes the <code>?</code> operator work</p>
-<p>For more background on error handling in Rust, read [this page of the Rust book][error-docs] and [this blog post][error-blog].</p>
+<p><img src="../../assets/graph.png" alt="Petersen Graph" /></p>
+<!-- Links -->
 
                 </div>
 
                 <!-- Mobile navigation buttons -->
                 
-                    <a href="pages/table_of_contents.html" class="mobile-nav-chapters previous">
+                    <a href="pages/rand.html" class="mobile-nav-chapters previous">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a href="pages/math.html" class="mobile-nav-chapters next">
+                    <a href="pages/algorithms.html" class="mobile-nav-chapters next">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 
@@ -123,13 +133,13 @@ makes the <code>?</code> operator work</p>
             </div>
 
             
-                <a href="pages/table_of_contents.html" class="nav-chapters previous" title="You can navigate through the chapters using the arrow keys">
+                <a href="pages/rand.html" class="nav-chapters previous" title="You can navigate through the chapters using the arrow keys">
                     <i class="fa fa-angle-left"></i>
                 </a>
             
 
             
-                <a href="pages/math.html" class="nav-chapters next" title="You can navigate through the chapters using the arrow keys">
+                <a href="pages/algorithms.html" class="nav-chapters next" title="You can navigate through the chapters using the arrow keys">
                     <i class="fa fa-angle-right"></i>
                 </a>
             
